@@ -5,7 +5,7 @@
 int crear_sem (int num_elem, int sem_key) {
  
 	printf("\n+--------------------------------------+\n");
-	printf("+         SEMAPHORE CREATION           +\n");
+	printf("+         Creacion de Semaforo           +\n");
 	printf("+--------------------------------------+\n");
 	 
 	int sem_ident;
