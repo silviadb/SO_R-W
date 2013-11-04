@@ -30,14 +30,20 @@ int fillBuffer(struct ringBuffer * buffer, int numberProducts,
  
  for (i = 0; i < numberProducts  && buffer->isOpen; i++){
  
-strcpy(name, "");
-strcat(name,"Product#");
-char code []= {(char) (65 + i), '\0'};
-strcat( name,  code);
+ strcpy(name, "");
+ strcat(name,"PID:");
  //char code []= {(char) (65 + i), '\0'};
+ char codex[10];
+ snprintf(codex, 10,"%d",(int)getpid());
+ strcat( name,  codex);
+ 
+char text[100];
+time_t now = time(NULL);
+struct tm *t = localtime(&now);
+strftime(text, sizeof(text)-1, "%d %m %Y %H:%M", t);
+strcat(name,",Date:");
+strcat( name,  text);
 
- snprintf(code, 10,"%d",(int)getpid());
- strcat( name,  code);
  
  printf("DECREASING Semaphore's Value - EMPTY.\n");
  semop(semid, &decEmpty, 1);
@@ -83,6 +89,30 @@ else{
  int i;
  struct ringBuffer * retrieveBuffer;
  
+
+//______________________________________
+int p_count;
+pid_t pid;
+pid_t proc[2];
+
+   /* spawn writer processes */
+  for (p_count = 1; p_count <= 2; p_count++)
+     { if (-1 == (pid = fork())) /* spawn child process */
+       { perror ("error in fork");  
+          exit (1);
+        }
+
+//______________________________________
+
+       if (0 == pid)             
+        { /* processing for parent == writer */
+          printf ("The writer process %d begins.\n", p_count);
+          //printf("The child's PID is %d.  The process group ID is %dn",
+         //  (int) getpid(), (int) getpgrp());
+
+//_______________________________________
+
+
  if ( !(sharedMemoryIdentifier < 0 || semaphoreArrayIdentifier < 0) ) {
  
   retrieveBuffer = (struct ringBuffer *)shmat(sharedMemoryIdentifier, 0, 0);
@@ -101,5 +131,12 @@ else{
  
  printf("\n> Producer with PID: %d TERMINATED\n",getpid());
 }
+//______________
+else proc[p_count -1]=pid;
+}
+}
+
+//_____________________
+
 return EXIT_SUCCESS;
 }
