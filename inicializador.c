@@ -111,7 +111,7 @@ int main(int argc, char **argv)
 {
  
 	if(argc < 4)
-	 printf("Use: resource_create <Semaphore Key> <Shared Memory Key> <Number of Products>");
+	 printf("Use: inicializador <Semaphore Key> <Shared Memory Key> <Number of Products>");
 	else
 	{
 	 
