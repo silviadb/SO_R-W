@@ -3,7 +3,7 @@
 int main(int argc, char **argv)
 {
 if(argc < 3)
- printf("Usage: producer <Semaphore Key> <Shared Memory Key>");
+ printf("Usage: producer <Llave Semaforo> <Llave Memoria Compartida>");
 else{
  
 int semaphoreKey = atoi(argv[1]);
@@ -29,20 +29,20 @@ while(1){
       perror("shmat");
   }
   else {
-  printf("+----------------------------------------------+\n");
-  printf("+   BUFFER INFORMATION    Is Open       [%d]   +\n",
+  printf("+----------------------------------------------------+\n");
+  printf("+   Informacion del BUFFER     Llave = [%d]          +\n",
    retrieveBuffer->isOpen);
-  printf("+----------------------------------------------+\n");
-  printf("| I | O |   Slot #   |    Code    |    Name    |\n");
-  printf("+----------------------------------------------+\n");
+  printf("+----------------------------------------------------+\n");
+  printf("| I | O |CAMPO #|PID & FECHA                         |\n");
+  printf("+----------------------------------------------------+\n");
   for(i=0;i<retrieveBuffer->size;i++){
    struct product *data = (struct product *)&retrieveBuffer[1];
    struct product currentProduct = data[i];
-   printf("| %c | %c | %10d | %10d | %10s |\n",
+   printf("| %c | %c | %5d | %s \n",
     retrieveBuffer-> in == i ? '>' : ' '
     , retrieveBuffer-> out == i ? '>' : ' '
-    , i,currentProduct.code,currentProduct.name);
-   printf("+---------------------------------------------+\n");
+    , i,currentProduct.name);
+   printf("+----------------------------------------------------+\n");
   }
  
   shmdt(retrieveBuffer);
