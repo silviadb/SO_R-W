@@ -26,7 +26,7 @@ static struct sembuf incMutex = { MUTEXSEM, 1, 0 };
 static struct sembuf decMutex = { MUTEXSEM, -1, 0 };
  
 struct product {
- char name [20];
+ char name [30];
  char code;
 };
  
