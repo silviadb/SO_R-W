@@ -24,17 +24,18 @@ int insertProduct(struct ringBuffer * buffer, int code,
  
 int fillBuffer(struct ringBuffer * buffer, int numberProducts,
         int semid, float sleepingTime){
- 
+         pthread_t h_aux;
 	 int i;
 	 char name [10];
-	 
+	 h_aux = pthread_self();
+
 	 for (i = 0; i < numberProducts  && buffer->isOpen; i++){
 	 
 	 strcpy(name, "");
 	 strcat(name,"PID:");
 	 //char code []= {(char) (65 + i), '\0'};
 	 char codex[10];
-	 snprintf(codex, 10,"%d",(int)getpid());
+	 snprintf(codex, 10,"%d",(unsigned int) h_aux);
 	 strcat( name,  codex);
 	 
 	char text[100];
@@ -43,6 +44,7 @@ int fillBuffer(struct ringBuffer * buffer, int numberProducts,
 	strftime(text, sizeof(text)-1, "%d %m %Y %H:%M", t);
 	strcat(name,",Date:");
 	strcat( name,  text);
+        
 
 	 
 	 printf("DECREASING Semaphore's Value - EMPTY.\n");
@@ -67,10 +69,11 @@ void * crear_writer(struct hilo_rw *arg){
  
 	 int semaphoreArrayIdentifier = arg->s_key;
 	 int sharedMemoryIdentifier = arg->m_key;
-	 int sleepingTime = arg->s_key;
-	 int numberProducts = arg->s_key;
+	 int sleepingTime = arg->sleep;
+	 int numberProducts = arg->num_p;
 
 	 pthread_t h_aux;
+         pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 	 	 
 	 
 	 int i;
@@ -85,20 +88,25 @@ void * crear_writer(struct hilo_rw *arg){
 	      perror("shmat");
 	  } else {
           int f=0;
-	   while(f!=1){
-	   fillBuffer( retrieveBuffer, numberProducts,
+	  
+           pthread_mutex_lock (&mutex1);
+	      fillBuffer( retrieveBuffer, numberProducts,
 		semaphoreArrayIdentifier,sleepingTime);
 	       shmdt(retrieveBuffer);
-            }
+            pthread_mutex_unlock (&mutex1); 
+           
 	  }
 	  } else {
 	  perror("shmget");
 	 }
 	 
+         crear_writer(arg);
+          
 	 h_aux = pthread_self();
 	 
 	 printf("\n> Producer with PID: %d TERMINATED\n",(unsigned int) h_aux);
-
+        
+        
 
 }
 
@@ -147,5 +155,6 @@ int main(int argc, char **argv)
 	}
 	 return 0;
 }
+
 
 
