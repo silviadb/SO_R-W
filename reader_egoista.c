@@ -48,25 +48,14 @@ int emptyBuffer(struct ringBuffer * buffer, int numberProducts,
  
 void * crear_reader_e(struct hilo_rw *arg){
 
- int semaphoreKey = arg->s_key;
- int sharedMemoryKey = arg->m_key;
+ int semaphoreArrayIdentifier = arg->s_key;
+ int sharedMemoryIdentifier = arg->m_key;
  int sleepingTime = arg->s_key;
  int numberProducts = arg->s_key;
 
  pthread_t h_aux;
 
- 
- int semaphoreArrayIdentifier;
- 
- semaphoreArrayIdentifier = semget (semaphoreKey, NSEM, IPC_PRIVATE);
- 
- int sharedMemoryIdentifier;
- char *attachedMemoryPointer;
- 
- sharedMemoryIdentifier = sharedMemoryIdentifier = shmget(sharedMemoryKey,
-         sizeof(struct ringBuffer),
-         PERM);
- 
+
  int i;
  struct ringBuffer * retrieveBuffer;
  
@@ -78,10 +67,12 @@ void * crear_reader_e(struct hilo_rw *arg){
       perror("shmat");
   } else {
   
-       
+    int f=0;
+    while(f!=0){ 
    emptyBuffer( retrieveBuffer, numberProducts,
          semaphoreArrayIdentifier,sleepingTime);
        shmdt(retrieveBuffer);
+   }
   }
   } else {
   perror("shmget");
@@ -109,9 +100,22 @@ else{
  int i;
  pthread_t hilos[numberProducts];
  
+
+  
+ int semaphoreArrayIdentifier;
+ 
+ semaphoreArrayIdentifier = semget (semaphoreKey, NSEM, IPC_PRIVATE);
+ 
+ int sharedMemoryIdentifier;
+ char *attachedMemoryPointer;
+ 
+ sharedMemoryIdentifier = sharedMemoryIdentifier = shmget(sharedMemoryKey,
+         sizeof(struct ringBuffer),
+         PERM);
+
  struct hilo_rw h_r;
-   h_r.s_key=semaphoreKey;
-   h_r.s_key=sharedMemoryKey;
+   h_r.s_key=semaphoreArrayIdentifier;
+   h_r.m_key=sharedMemoryIdentifier;
    h_r.sleep = sleepingTime;
    h_r.num_p = numberProducts;
 
