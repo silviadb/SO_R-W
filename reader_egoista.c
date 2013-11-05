@@ -68,7 +68,7 @@ void * crear_reader_e(struct hilo_rw *arg){
   } else {
   
     int f=0;
-    while(f!=0){ 
+    while(f!=1){ 
    emptyBuffer( retrieveBuffer, numberProducts,
          semaphoreArrayIdentifier,sleepingTime);
        shmdt(retrieveBuffer);
