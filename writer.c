@@ -85,7 +85,7 @@ void * crear_writer(struct hilo_rw *arg){
 	      perror("shmat");
 	  } else {
           int f=0;
-	   while(f!=0){
+	   while(f!=1){
 	   fillBuffer( retrieveBuffer, numberProducts,
 		semaphoreArrayIdentifier,sleepingTime);
 	       shmdt(retrieveBuffer);
