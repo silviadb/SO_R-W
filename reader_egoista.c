@@ -50,10 +50,11 @@ void * crear_reader_e(struct hilo_rw *arg){
 
  int semaphoreArrayIdentifier = arg->s_key;
  int sharedMemoryIdentifier = arg->m_key;
- int sleepingTime = arg->s_key;
- int numberProducts = arg->s_key;
+ int sleepingTime = arg->sleep;
+ int numberProducts = arg->num_p;
 
  pthread_t h_aux;
+ pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 
 
  int i;
@@ -68,16 +69,19 @@ void * crear_reader_e(struct hilo_rw *arg){
   } else {
   
     int f=0;
-    while(f!=1){ 
+   
+    pthread_mutex_lock (&mutex1);
    emptyBuffer( retrieveBuffer, numberProducts,
          semaphoreArrayIdentifier,sleepingTime);
        shmdt(retrieveBuffer);
-   }
+   pthread_mutex_unlock (&mutex1);
+  
   }
   } else {
   perror("shmget");
  }
  
+  crear_reader_e(arg);
   h_aux = pthread_self();
  
  printf("\n> Producer with PID: %d TERMINATED\n",(unsigned int) h_aux);
