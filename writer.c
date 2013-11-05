@@ -1,79 +1,60 @@
 #include "common.h"
  
-int insertProduct(struct ringBuffer * buffer, int code,
-    char * name, int semid){
+int removeProduct(struct ringBuffer * buffer){
  
- printf("\n+--------------------------------------+\n");
- printf("+   PRODUCING AND INSERTING PRODUCT    +\n");
- printf("+--------------------------------------+\n");
- 
- int currentIn = buffer->in;
-  
- struct product * data = (struct product *)&buffer[1];
- data[currentIn].code = code;
- strcpy( data[currentIn].name, name );
- buffer->in++;
- 
- if(buffer->in == buffer->size)
-  buffer->in = 0;
- 
- printf("Product [Code: %d , Name: %s] INSERTED in Slot: %d\n",
-  data[currentIn].code,data[currentIn].name,currentIn);
- 
+	 printf("\n+--------------------------------------+\n");
+	 printf("+   CONSUMING AND INSERTING PRODUCT    +\n");
+	 printf("+--------------------------------------+\n");
+	 
+	 int currentOut = buffer->out;
+	 struct product * data = (struct product *) &buffer[1];
+	 
+	 data[currentOut].code = NULL;
+	 strcpy( data[currentOut].name, "" );
+	 buffer->out++;
+	 
+	 if(buffer->out == buffer->size)
+	  buffer->out = 0;
+	 
+	 printf("Product [Code: %d , Name: %s] REMOVED from Slot: %d\n",
+	  data[currentOut].code, data[currentOut].name,currentOut);
+	 
 }
  
-int fillBuffer(struct ringBuffer * buffer, int numberProducts,
-        int semid, float sleepingTime){
+int emptyBuffer(struct ringBuffer * buffer, int numberProducts,
+         int semid, float sleepingTime){
  
- int i;
- char name [10];
+	int i;
+	 
+	for (i = 0; i < numberProducts && buffer->isOpen ; i++){
+	 
+	printf("DECREASING Semaphore's Value - FULL.\n");
+	semop(semid, &decFull, 1);
+	printf("DECREASING Semaphore's Value - MUTEX.\n");
+	semop(semid, &decMutex, 1);
+	removeProduct(buffer);
+	printf("INCREASING Semaphore's Value - MUTEX.\n");
+	semop(semid, &incMutex, 1);
+	printf("INCREASING Semaphore's Value - EMPTY.\n");
+	semop(semid, &incEmpty, 1);
+	 
+	printf("\n> Buffer info - In Pointer: %d , Out Pointer: %d\n",
+	 buffer->in, buffer->out);
+	 
+	sleep(sleepingTime);
+	 
+	}
+}
  
- for (i = 0; i < numberProducts  && buffer->isOpen; i++){
- 
- strcpy(name, "");
- strcat(name,"PID:");
- //char code []= {(char) (65 + i), '\0'};
- char codex[10];
- snprintf(codex, 10,"%d",(int)getpid());
- strcat( name,  codex);
- 
-char text[100];
-time_t now = time(NULL);
-struct tm *t = localtime(&now);
-strftime(text, sizeof(text)-1, "%d %m %Y %H:%M", t);
-strcat(name,",Date:");
-strcat( name,  text);
+void * crear_reader_e(struct hilo_rw *arg){
 
- 
- printf("DECREASING Semaphore's Value - EMPTY.\n");
- semop(semid, &decEmpty, 1);
- printf("DECREASING Semaphore's Value - MUTEX.\n");
- semop(semid, &decMutex, 1);
- insertProduct(buffer,i,name,0);
- printf("INCREASING Semaphore's Value - MUTEX.\n");
- semop(semid, &incMutex, 1);
- printf("INCREASING Semaphore's Value - FULL.\n");
- semop(semid, &incFull, 1);
- 
- printf("\n> Buffer info - In Pointer: %d , Out Pointer: %d\n"
-  ,buffer->in, buffer->out);
- 
- sleep(sleepingTime);
- 
- }
-}
- 
-int main(int argc, char **argv)
-{
- 
-if(argc < 5)
- printf("Usage: producer <Semaphore Key> <Shared Memory Key> <Sleeping Time> <Number of Products>");
-else{
- 
- int semaphoreKey = atoi(argv[1]);
- int sharedMemoryKey = atoi(argv[2]);
- int sleepingTime = atoi(argv[3]);
- int numberProducts = atoi(argv[4]);
+ int semaphoreKey = arg->s_key;
+ int sharedMemoryKey = arg->m_key;
+ int sleepingTime = arg->s_key;
+ int numberProducts = arg->s_key;
+
+ pthread_t h_aux;
+
  
  int semaphoreArrayIdentifier;
  
@@ -89,30 +70,6 @@ else{
  int i;
  struct ringBuffer * retrieveBuffer;
  
-
-//______________________________________
-int p_count;
-pid_t pid;
-pid_t proc[2];
-
-   /* spawn writer processes */
-  for (p_count = 1; p_count <= 2; p_count++)
-     { if (-1 == (pid = fork())) /* spawn child process */
-       { perror ("error in fork");  
-          exit (1);
-        }
-
-//______________________________________
-
-       if (0 == pid)             
-        { /* processing for parent == writer */
-          printf ("The writer process %d begins.\n", p_count);
-          //printf("The child's PID is %d.  The process group ID is %dn",
-         //  (int) getpid(), (int) getpgrp());
-
-//_______________________________________
-
-
  if ( !(sharedMemoryIdentifier < 0 || semaphoreArrayIdentifier < 0) ) {
  
   retrieveBuffer = (struct ringBuffer *)shmat(sharedMemoryIdentifier, 0, 0);
@@ -120,23 +77,54 @@ pid_t proc[2];
   if (retrieveBuffer==( struct ringBuffer *)-1) {
       perror("shmat");
   } else {
+  
        
-   fillBuffer( retrieveBuffer, numberProducts,
-        semaphoreArrayIdentifier,sleepingTime);
+   emptyBuffer( retrieveBuffer, numberProducts,
+         semaphoreArrayIdentifier,sleepingTime);
        shmdt(retrieveBuffer);
   }
   } else {
   perror("shmget");
  }
  
- printf("\n> Producer with PID: %d TERMINATED\n",getpid());
-}
-//______________
-else proc[p_count -1]=pid;
-}
-}
+  h_aux = pthread_self();
+ 
+ printf("\n> Producer with PID: %d TERMINATED\n",(unsigned int) h_aux);
 
-//_____________________
-
+ 
 return EXIT_SUCCESS;
+}
+
+int main(int argc, char **argv)
+{
+ 
+if(argc < 5)
+ printf("Usage: producer <Semaphore Key> <Shared Memory Key> <Sleeping Time> <Number of Products>");
+else{
+
+ int semaphoreKey = atoi(argv[1]);
+ int sharedMemoryKey = atoi(argv[2]);
+ int sleepingTime = atoi(argv[3]);
+ int numberProducts = atoi(argv[4]);
+ int i;
+ pthread_t hilos[numberProducts];
+ 
+ struct hilo_rw h_r;
+   h_r.s_key=semaphoreKey;
+   h_r.s_key=sharedMemoryKey;
+   h_r.sleep = sleepingTime;
+   h_r.num_p = numberProducts;
+
+ for(i=0;i<numberProducts;i++){
+ 	int new_reader = pthread_create(&hilos[i], NULL, (void *) &crear_reader_e,(void *) &h_r);
+ }
+
+  sleep(50);
+  
+  for(i=1;i<numberProducts;i++){
+     pthread_join(hilos[i], NULL);
+  }
+ 
+}
+ return 0;
 }
