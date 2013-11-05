@@ -2,11 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
+#include <time.h>
  
 #define PERM 0666
  
@@ -31,4 +33,9 @@ struct product {
 struct ringBuffer
 {
  char in,out,isOpen,size;
+};
+
+struct hilo_rw
+{
+ int s_key, m_key ,sleep, num_p;
 };
