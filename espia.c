@@ -33,14 +33,15 @@ while(1){
   printf("+   Informacion del BUFFER     Llave = [%d]          +\n",
    retrieveBuffer->isOpen);
   printf("+----------------------------------------------------+\n");
-  printf("| I | O |CAMPO #|PID & FECHA                         |\n");
+  printf("| W | R_E | R |CAMPO #|PID & FECHA                         |\n");
   printf("+----------------------------------------------------+\n");
   for(i=0;i<retrieveBuffer->size;i++){
    struct product *data = (struct product *)&retrieveBuffer[1];
    struct product currentProduct = data[i];
-   printf("| %c | %c | %5d | %s \n",
+   printf("| %c | %c | %c | %5d | %s \n",
     retrieveBuffer-> in == i ? '>' : ' '
-    , retrieveBuffer-> out == i ? '>' : ' '
+    , retrieveBuffer-> out == i ? '>' : ' ',
+    retrieveBuffer-> read == i ? '>' : ' '
     , i,currentProduct.name);
    printf("+----------------------------------------------------+\n");
   }
@@ -57,3 +58,4 @@ while(1){
 }
 return EXIT_SUCCESS;
 }
+ 
