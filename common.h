@@ -26,13 +26,13 @@ static struct sembuf incMutex = { MUTEXSEM, 1, 0 };
 static struct sembuf decMutex = { MUTEXSEM, -1, 0 };
  
 struct product {
- char name [30];
+ char name [100];
  char code;
 };
  
 struct ringBuffer
 {
- char in,out,isOpen,size;
+ char in,out,read,isOpen,size;
 };
 
 struct hilo_rw
